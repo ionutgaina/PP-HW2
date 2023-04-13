@@ -1,8 +1,8 @@
 import util.Util.Row
 import util.Util.Line
-import TestTables.tableImperative
-import TestTables.tableFunctional
-import TestTables.tableObjectOriented
+//import TestTables.tableImperative
+//import TestTables.tableFunctional
+//import TestTables.tableObjectOriented
 
 trait FilterCond {
   def &&(other: FilterCond): FilterCond = ???
@@ -74,7 +74,9 @@ class Table (columnNames: Line, tabular: List[List[String]]) {
   def getTabular : List[List[String]] = tabular
 
   // 1.1
-  override def toString: String = ???
+  override def toString: String =
+    columnNames.mkString(",") + "\n" +
+      tabular.map(_.mkString(",")).mkString("\n")
 
   // 2.1
   def select(columns: Line): Option[Table] = ???
@@ -91,5 +93,10 @@ class Table (columnNames: Line, tabular: List[List[String]]) {
 
 object Table {
   // 1.2
-  def apply(s: String): Table = ???
+  def apply(s: String): Table = {
+    val lines = s.split("\n").toList
+    val columnNames = lines.head.split(",").toList;
+    val tabular = lines.tail.map(_.split(",").toList);
+    new Table(columnNames, tabular)
+  }
 }
