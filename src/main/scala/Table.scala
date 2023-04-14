@@ -112,7 +112,8 @@ class Table (columnNames: Line, tabular: List[List[String]]) {
   }
 
   // 2.3.
-  def newCol(name: String, defaultVal: String): Table = ???
+  def newCol(name: String, defaultVal: String): Table =
+    new Table(columnNames :+ name, tabular.map(_ :+ defaultVal))
 
   // 2.4.
   def merge(key: String, other: Table): Option[Table] = ???
