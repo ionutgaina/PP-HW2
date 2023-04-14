@@ -1,5 +1,4 @@
-import util.Util.Row
-import util.Util.Line
+import util.Util.{Line, Row}
 //import TestTables.tableImperative
 //import TestTables.tableFunctional
 //import TestTables.tableObjectOriented
@@ -79,7 +78,19 @@ class Table (columnNames: Line, tabular: List[List[String]]) {
       tabular.map(_.mkString(",")).mkString("\n")
 
   // 2.1
-  def select(columns: Line): Option[Table] = ???
+  def select(columns: Line): Option[Table] = {
+    def selectColumn(column: String): Option[Line] = {
+      val index = columnNames.indexOf(column)
+      if (index == -1) None
+      else Some(tabular.map(_(index)))
+    }
+
+    val selectedColumns = columns.map(selectColumn).filter(_.isDefined).map(_.get)
+
+    if (selectedColumns.isEmpty) None
+    else Some(new Table(columns, selectedColumns.transpose))
+
+  }
 
   // 2.2
   def filter(cond: FilterCond): Option[Table] = ???
