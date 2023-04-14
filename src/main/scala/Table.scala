@@ -44,14 +44,19 @@ trait Query {
   Always succeeds
  */
 case class Value(t: Table) extends Query {
-  override def eval: Option[Table] = ???
+  override def eval: Option[Table] =
+    Some(t)
 }
 /*
   Selects certain columns from the result of a target query
   Fails with None if some rows are not present in the resulting table
  */
 case class Select(columns: Line, target: Query) extends Query {
-  override def eval: Option[Table] = ???
+  override def eval: Option[Table] =
+    target.eval match {
+      case Some(table) => table.select(columns)
+      case None => None
+    }
 }
 
 /*
@@ -59,7 +64,11 @@ case class Select(columns: Line, target: Query) extends Query {
   Success depends only on the success of the target
  */
 case class Filter(condition: FilterCond, target: Query) extends Query {
-  override def eval: Option[Table] = ???
+  override def eval: Option[Table] =
+    target.eval match {
+      case Some(table) => table.filter(condition)
+      case None => None
+    }
 }
 
 /*
@@ -67,7 +76,11 @@ case class Filter(condition: FilterCond, target: Query) extends Query {
   Success depends only on the success of the target
  */
 case class NewCol(name: String, defaultVal: String, target: Query) extends Query {
-  override def eval: Option[Table] = ???
+  override def eval: Option[Table] =
+    target.eval match {
+      case Some(table) => Some(table.newCol(name, defaultVal))
+      case None => None
+    }
 }
 
 /*
@@ -75,7 +88,11 @@ case class NewCol(name: String, defaultVal: String, target: Query) extends Query
   Success depends on whether the key exists in both tables or not AND on the success of the target
  */
 case class Merge(key: String, t1: Query, t2: Query) extends Query {
-  override def eval: Option[Table] = ???
+  override def eval: Option[Table] =
+    (t1.eval, t2.eval) match {
+      case (Some(table1), Some(table2)) => table1.merge(key, table2)
+      case _ => None
+    }
 }
 
 
@@ -158,9 +175,9 @@ class Table (columnNames: Line, tabular: List[List[String]]) {
 
       val mergedTabular = mergedTabularOne ++ mergedTabularTwo
 
-      val rearangedTabular = mergedTabular.map(row => mergedColumnNames.map(column => row.find(_._1.contentEquals(column)).get._2)).toList
+      val rearrangedTabular = mergedTabular.map(row => mergedColumnNames.map(column => row.find(_._1.contentEquals(column)).get._2)).toList
 
-      Some(new Table(mergedColumnNames, rearangedTabular))
+      Some(new Table(mergedColumnNames, rearrangedTabular))
     }
   }
 }

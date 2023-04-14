@@ -114,13 +114,13 @@ object TestTables {
     Table(str.replace("\r", ""))
   }
 
-//  // 3.1
-//  def programmingLanguages1: Table = ???
-//
-//  // 3.2
-//  val programmingLanguages2: Table = ???
-//
-//  // 3.3
-//  val programmingLanguages3: Table = ???
+  // 3.1
+  def programmingLanguages1: Table = ???
+
+  // 3.2
+  val programmingLanguages2: Table = ???
+
+  // 3.3
+  val programmingLanguages3: Table = ???
 
 }
