@@ -105,8 +105,7 @@ class Table (columnNames: Line, tabular: List[List[String]]) {
 
   // 2.2
   def filter(cond: FilterCond): Option[Table] = {
-    // tabular.indices <=> (0 until tabular.size)
-    val mappedRows = tabular.indices.map(i => columnNames.zip(tabular(i)).toMap).toList
+    val mappedRows = tabular.map(row => columnNames.zip(row).toMap)
     val filteredRows = mappedRows.filter(cond.eval(_).contains(true))
     if (filteredRows.isEmpty) None else Some(new Table(columnNames, filteredRows.map(_.values.toList)))
   }
@@ -116,7 +115,54 @@ class Table (columnNames: Line, tabular: List[List[String]]) {
     new Table(columnNames :+ name, tabular.map(_ :+ defaultVal))
 
   // 2.4.
-  def merge(key: String, other: Table): Option[Table] = ???
+  def merge(key: String, other: Table): Option[Table] = {
+    val otherColumnNames = other.getColumnNames;
+    val otherTabular = other.getTabular;
+    if (!columnNames.contains(key) || !otherColumnNames.contains(key)) None else {
+      val mergedColumnNames = columnNames ++ otherColumnNames.filter(column => !columnNames.contains(column))
+
+      val hashedTabularOne = tabular.map(row => row(columnNames.indexOf(key)) -> columnNames.zip(row)).toMap
+      val hashedTabularTwo = otherTabular.map(row => row(otherColumnNames.indexOf(key)) -> otherColumnNames.zip(row)).toMap
+
+      val mergedTabularOne = hashedTabularOne.map { case (key, row) => {
+        val otherRow = hashedTabularTwo.get(key)
+        if (otherRow.isDefined) {
+          mergedColumnNames.map(column => {
+            val valueRow = row.find(_._1.contentEquals(column)) match {
+              case Some(value) => value._2
+              case None => ""
+            }
+            val valueOtherRow = otherRow.get.find(_._1.contentEquals(column)) match {
+              case Some(value) => value._2
+              case None => ""
+            }
+
+            if (valueRow.isEmpty) column -> valueOtherRow else if (valueOtherRow.isEmpty) column -> valueRow else if (valueRow == valueOtherRow) column -> valueRow else column -> (valueRow ++ ";" ++ valueOtherRow)
+          })
+        } else {
+          row ++ otherColumnNames.filter(column => !columnNames.contains(column)).map(column => column -> "")
+        }
+      }
+      }
+
+      val mergedTabularTwo = hashedTabularTwo.map { case (key, row) => {
+        val otherRow = hashedTabularOne.get(key)
+
+        if (otherRow.isEmpty) {
+          row ++ columnNames.filter(column => !otherColumnNames.contains(column)).map(column => column -> "")
+        } else {
+          List()
+        }
+      }
+      }.filter(_.nonEmpty)
+
+      val mergedTabular = mergedTabularOne ++ mergedTabularTwo
+
+      val rearangedTabular = mergedTabular.map(row => mergedColumnNames.map(column => row.find(_._1.contentEquals(column)).get._2)).toList
+
+      Some(new Table(mergedColumnNames, rearangedTabular))
+    }
+  }
 }
 
 object Table {
@@ -124,7 +170,7 @@ object Table {
   def apply(s: String): Table = {
     val lines = s.split("\n").toList
     val columnNames = lines.head.split(",").toList;
-    val tabular = lines.tail.map(_.split(",").toList);
+    val tabular = lines.tail.map(_.split(",", -1).toList);
     new Table(columnNames, tabular)
   }
 }
