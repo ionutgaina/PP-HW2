@@ -4,24 +4,35 @@ import util.Util.{Line, Row}
 //import TestTables.tableObjectOriented
 
 trait FilterCond {
-  def &&(other: FilterCond): FilterCond = ???
-  def ||(other: FilterCond): FilterCond = ???
+  def &&(other: FilterCond): FilterCond = And(this, other)
+  def ||(other: FilterCond): FilterCond = Or(this, other)
+
   // fails if the column name is not present in the row
   def eval(r: Row): Option[Boolean]
 }
 case class Field(colName: String, predicate: String => Boolean) extends FilterCond {
   // 2.2.
-  override def eval(r: Row): Option[Boolean] = ???
+  override def eval(r: Row): Option[Boolean] =
+    r.get(colName) match {
+    case Some(value) => Some(predicate(value))
+    case None => None
+  }
 }
 
 case class And(f1: FilterCond, f2: FilterCond) extends FilterCond {
   // 2.2.
-  override def eval(r: Row): Option[Boolean] = ???
+  override def eval(r: Row): Option[Boolean] =
+    Some(f1.eval(r).contains(true) && f2.eval(r).contains(true))
 }
 
 case class Or(f1: FilterCond, f2: FilterCond) extends FilterCond {
   // 2.2.
-  override def eval(r: Row): Option[Boolean] = ???
+  override def eval(r: Row): Option[Boolean] = {
+    if (f1.eval(r).isEmpty || f2.eval(r).isEmpty)
+      None;
+    else
+      Some(f1.eval(r).contains(true) || f2.eval(r).contains(true))
+  }
 }
 
 trait Query {
@@ -93,7 +104,12 @@ class Table (columnNames: Line, tabular: List[List[String]]) {
   }
 
   // 2.2
-  def filter(cond: FilterCond): Option[Table] = ???
+  def filter(cond: FilterCond): Option[Table] = {
+    // tabular.indices <=> (0 until tabular.size)
+    val mappedRows = tabular.indices.map(i => columnNames.zip(tabular(i)).toMap).toList
+    val filteredRows = mappedRows.filter(cond.eval(_).contains(true))
+    if (filteredRows.isEmpty) None else Some(new Table(columnNames, filteredRows.map(_.values.toList)))
+  }
 
   // 2.3.
   def newCol(name: String, defaultVal: String): Table = ???
