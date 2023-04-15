@@ -151,7 +151,14 @@ object TestTables {
     result
   }
 
-//  // 3.3
-//  val programmingLanguages3: Table = ???
+  // 3.3
+  val programmingLanguages3: Table = {
+    val result = Select(
+      List("Language", "Object-Oriented", "Functional"),
+      Value(programmingLanguages2)
+    ).eval.get
+
+    result
+  }
 
 }
