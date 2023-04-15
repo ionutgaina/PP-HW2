@@ -124,7 +124,10 @@ class Table (columnNames: Line, tabular: List[List[String]]) {
   def filter(cond: FilterCond): Option[Table] = {
     val mappedRows = tabular.map(row => columnNames.zip(row).toMap)
     val filteredRows = mappedRows.filter(cond.eval(_).contains(true))
-    if (filteredRows.isEmpty) None else Some(new Table(columnNames, filteredRows.map(_.values.toList)))
+
+    // arrange the columns in the same order as the original table because the order of the columns in the map is not guaranteed
+    val result = filteredRows.map(row => columnNames.map(row(_)))
+    if (filteredRows.isEmpty) None else Some(new Table(columnNames, result))
   }
 
   // 2.3.
